@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#fdf4f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>AgusCau Studio - POS</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Pantalla de Login -->
+        <main id="screen-login" class="screen active flex-center">
+            <img src="Portada.jpg" alt="AgusCau Studio" style="width: 140px; height: 140px; border-radius: 28px; object-fit: cover; margin-bottom: 24px; box-shadow: 0 10px 25px rgba(255, 113, 130, 0.15);">
+            <h2>Bienvenida</h2>
+            <p class="subtitle" style="margin-bottom: 20px;">Seleccioná tu usuario para ingresar</p>
+            <div class="card" style="width: 100%;">
+                <button class="secondary-btn mt-10 login-btn" data-user="Agus">Ingresar como Agus</button>
+                <button class="secondary-btn mt-10 login-btn" data-user="Cande">Ingresar como Cande</button>
+                <button class="secondary-btn mt-10 login-btn" data-user="Cacu">Ingresar como Cacu</button>
+            </div>
+        </main>
+
+        <!-- Pantalla Nueva Venta -->
+        <main id="screen-nueva-venta" class="screen">
+            <header class="top-header">
+                <img src="Portada.jpg" alt="AgusCau Studio" style="width: 64px; height: 64px; border-radius: 16px; object-fit: cover; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(255, 113, 130, 0.1);">
+                <p class="subtitle">Punto de Venta</p>
+            </header>
+
+            <div class="card">
+                <label>Profesional</label>
+                <div class="button-group" id="profesional-group">
+                    <button class="pill-btn" data-value="Cande">Cande</button>
+                    <button class="pill-btn" data-value="Cacu">Cacu</button>
+                    <button class="pill-btn" data-value="Agus">Agus</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="form-group">
+                    <label>Nombre del Cliente</label>
+                    <input type="text" id="cliente-nombre" placeholder="Ingresá el nombre">
+                </div>
+                <div class="form-group mt-15">
+                    <label>Tipo de Servicio</label>
+                    <div class="button-group horizontal-scroll" id="servicio-group" style="overflow-x: auto; padding-bottom: 5px;">
+                        <!-- JS populated -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="form-group">
+                    <label>Precio Total ($)</label>
+                    <div class="input-with-icon">
+                        <span class="currency-icon">$</span>
+                        <input type="number" id="precio-total" placeholder="0" inputmode="numeric" pattern="[0-9]*">
+                    </div>
+                </div>
+                <div class="form-group mt-15">
+                    <label>Seña Pagada ($)</label>
+                    <div class="input-with-icon">
+                        <span class="currency-icon">$</span>
+                        <input type="number" id="sena-pagada" placeholder="0" inputmode="numeric" pattern="[0-9]*">
+                    </div>
+                </div>
+                <div class="saldo-container mt-15">
+                    <span class="saldo-label">Saldo a Pagar</span>
+                    <span class="saldo-amount" id="saldo-pagar">$0.00</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <label>Método de Pago</label>
+                <div class="payment-group" id="metodo-pago-group">
+                    <button class="payment-btn" data-value="Mercado Pago">
+                        <i class="fas fa-mobile-screen"></i>
+                        <span>Mercado Pago</span>
+                    </button>
+                    <button class="payment-btn" data-value="Efectivo">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Efectivo</span>
+                    </button>
+                    <button class="payment-btn" data-value="Transferencia">
+                        <i class="fas fa-exchange-alt"></i>
+                        <span>Transferencia</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="card mt-15" style="margin-bottom: 20px;">
+                <div class="form-group">
+                    <label>Foto del Trabajo (Opcional)</label>
+                    <div style="display: flex; gap: 12px; align-items: center; margin-top: 8px;">
+                        <label for="foto-trabajo" style="flex: 1; text-align: center; background: #fff4ec; border: 1px dashed #ffa161; padding: 12px; border-radius: 12px; cursor: pointer; color: #ff7182; font-weight: 600;">
+                            <i class="fas fa-camera" style="margin-right: 8px;"></i> Añadir Foto
+                        </label>
+                        <input type="file" id="foto-trabajo" accept="image/*" style="display: none;">
+                        <div id="foto-preview" style="width: 48px; height: 48px; border-radius: 8px; background: #f0e6ea; display: none; background-size: cover; background-position: center;"></div>
+                        <button id="btn-remove-foto" style="display: none; background: none; border: none; color: #ef4444; font-size: 16px; padding: 8px;"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="primary-btn mt-20" id="btn-confirmar">Confirmar Venta</button>
+            <div style="height: 100px;"></div> <!-- Spacer for bottom nav -->
+        </main>
+
+        <!-- Pantalla Editar Venta (Solo Agus) -->
+        <main id="screen-editar-venta" class="screen">
+            <header class="top-header" style="display: flex; align-items: center; justify-content: center; position: relative;">
+                <button class="back-btn" id="btn-back-edit" style="position: absolute; left: 0; background: none; border: none; font-size: 20px; color: #ff7182; padding: 10px;"><i class="fas fa-arrow-left"></i></button>
+                <div class="logo-pill" style="margin: 0;">Editar Registro</div>
+            </header>
+
+            <input type="hidden" id="edit-id">
+
+            <div class="card mt-20">
+                <div class="form-group">
+                    <label>Nombre del Cliente</label>
+                    <input type="text" id="edit-cliente-nombre">
+                </div>
+                <div class="form-group mt-15">
+                    <label>Tipo de Servicio</label>
+                    <div class="button-group horizontal-scroll" id="edit-servicio-group" style="overflow-x: auto; padding-bottom: 5px;">
+                        <!-- JS populated -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="form-group">
+                    <label>Precio Total ($)</label>
+                    <div class="input-with-icon">
+                        <span class="currency-icon">$</span>
+                        <input type="number" id="edit-precio-total" inputmode="numeric" pattern="[0-9]*">
+                    </div>
+                </div>
+                <div class="form-group mt-15">
+                    <label>Seña Pagada ($)</label>
+                    <div class="input-with-icon">
+                        <span class="currency-icon">$</span>
+                        <input type="number" id="edit-sena-pagada" inputmode="numeric" pattern="[0-9]*">
+                    </div>
+                </div>
+                <div class="form-group mt-15">
+                    <label>Foto del Trabajo (Opcional)</label>
+                    <div style="display: flex; gap: 12px; align-items: center; margin-top: 8px;">
+                        <label for="edit-foto-trabajo" style="flex: 1; text-align: center; background: #fff4ec; border: 1px dashed #ffa161; padding: 12px; border-radius: 12px; cursor: pointer; color: #ff7182; font-weight: 600;">
+                            <i class="fas fa-camera" style="margin-right: 8px;"></i> Cambiar Foto
+                        </label>
+                        <input type="file" id="edit-foto-trabajo" accept="image/*" style="display: none;">
+                        <div id="edit-foto-preview" style="width: 48px; height: 48px; border-radius: 8px; background: #f0e6ea; display: none; background-size: cover; background-position: center;"></div>
+                        <button id="edit-btn-remove-foto" style="display: none; background: none; border: none; color: #ef4444; font-size: 16px; padding: 8px;"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="primary-btn mt-20" id="btn-guardar-edicion">Guardar Cambios</button>
+            <button class="secondary-btn mt-10" id="btn-eliminar-registro" style="color: #ef4444; border-color: #fca5a5; background: #fef2f2;">Eliminar Registro</button>
+            <div style="height: 100px;"></div>
+        </main>
+
+        <!-- Pantalla Historial -->
+        <main id="screen-historial" class="screen">
+            <header class="historial-header">
+                <h1>Historial y Rendimiento</h1>
+                <p>Tu progreso de la semana</p>
+            </header>
+
+            <div class="card metrics-card">
+                <p class="metrics-label">INGRESOS SEMANALES</p>
+                <div class="metrics-value-container">
+                    <h2 class="metrics-value">$359.000</h2>
+                    <span class="metrics-badge">+12%</span>
+                </div>
+                <div class="chart-container" style="position: relative;">
+                    <!-- Tooltip del Gráfico -->
+                    <div id="chart-tooltip" class="chart-tooltip" style="display: none; position: absolute; top: -30px; left: 50%; transform: translateX(-50%); background: #1a202c; color: white; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; white-space: nowrap; pointer-events: none;">Total: $0</div>
+                    <div class="chart-y-axis">
+                        <span>$100k</span>
+                        <span>$75k</span>
+                        <span>$50k</span>
+                        <span>$25k</span>
+                        <span>$0k</span>
+                    </div>
+                    <div class="chart-bars">
+                        <!-- Bars styling as per screenshot -->
+                        <div class="bar-col"><div class="bar" style="height: 40%;"></div><span>Lun</span></div>
+                        <div class="bar-col"><div class="bar" style="height: 30%;"></div><span>Mar</span></div>
+                        <div class="bar-col"><div class="bar" style="height: 45%;"></div><span>Mie</span></div>
+                        <div class="bar-col"><div class="bar" style="height: 55%;"></div><span>Jue</span></div>
+                        <div class="bar-col"><div class="bar" style="height: 80%;"></div><span>Vie</span></div>
+                        <div class="bar-col"><div class="bar bar-active" style="height: 100%;"></div><span>Sab</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-scroll-container">
+                <div class="button-group horizontal-scroll">
+                    <button class="pill-btn active" data-filter="Todos">Todos</button>
+                    <button class="pill-btn" data-filter="Agus">Agus</button>
+                    <button class="pill-btn" data-filter="Cande">Cande</button>
+                    <button class="pill-btn" data-filter="Cacu">Cacu</button>
+                </div>
+            </div>
+
+            <h3 class="section-title">Últimos Servicios</h3>
+            <div class="history-list" id="history-list">
+                <!-- Items populated by JS -->
+            </div>
+            
+            <div style="height: 100px;"></div> <!-- Spacer for bottom nav -->
+        </main>
+
+        <!-- Pantalla Confirmación (Feedback Visual) -->
+        <main id="screen-confirmacion" class="screen flex-center">
+            <div class="success-card">
+                <div class="success-icon">
+                    <i class="fas fa-check"></i>
+                </div>
+                <h2>¡Venta Confirmada!</h2>
+                <p id="success-message">Cobro de $10.000 registrado para Martina Greco.</p>
+                <button class="primary-btn mt-20" id="btn-nuevo-cobro">Nuevo Cobro</button>
+                <button class="secondary-btn mt-10" id="btn-ir-inicio">Ir al Historial</button>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-target="screen-nueva-venta">
+                <div class="nav-icon-wrapper">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <span>Nueva Venta</span>
+            </button>
+            <button class="nav-item" data-target="screen-historial">
+                <div class="nav-icon-wrapper">
+                    <i class="fas fa-clock-rotate-left"></i>
+                </div>
+                <span>Historial</span>
+            </button>
+            <button class="nav-item" data-target="screen-perfil">
+                <div class="nav-icon-wrapper">
+                    <i class="fas fa-user"></i>
+                </div>
+                <span>Perfil</span>
+            </button>
+        </nav>
+
+        <!-- Pantalla Perfil -->
+        <main id="screen-perfil" class="screen">
+            <header class="top-header">
+                <h2>Mi Perfil</h2>
+            </header>
+            <div class="card flex-center" style="padding: 40px 20px; align-items: center; text-align: center; display: flex; flex-direction: column;">
+                <div class="avatar-large" id="perfil-avatar" style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #ff7182 0%, #ffa161 100%); color: white; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 800; margin-bottom: 16px;">A</div>
+                <h3 id="perfil-nombre">Agus</h3>
+                <p id="perfil-rol" class="item-meta" style="justify-content: center; margin-top: 4px; margin-bottom: 24px;">Admin</p>
+                <button class="secondary-btn" id="btn-logout">Cerrar Sesión</button>
+            </div>
+
+            <!-- Admin Section -->
+            <div id="admin-section" class="admin-only" style="display: none;">
+                <h3 class="section-title">Administración</h3>
+                <div class="card">
+                    <div class="financiero-item" style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; color: #4a5568;">
+                        <span>Ingreso Bruto (Mes)</span>
+                        <span id="admin-bruto" style="font-weight: 600;">$0</span>
+                    </div>
+                    <div class="financiero-item" style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; color: #4a5568;">
+                        <span>Comisiones a Pagar (40%)</span>
+                        <span id="admin-comisiones" style="color: #ef4444; font-weight: 600;">-$0</span>
+                    </div>
+                    <hr style="border: none; border-top: 1px dashed #e2e8f0; margin: 16px 0;">
+                    <div class="financiero-item total" style="display: flex; justify-content: space-between; font-size: 18px; font-weight: 800;">
+                        <span>Ingreso Neto Estudio</span>
+                        <span id="admin-neto" style="color: #059669;">$0</span>
+                    </div>
+                    <div style="margin-top: 24px; padding: 16px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <label style="font-size: 13px; color: #4a5568; font-weight: 600; display: block; margin-bottom: 8px;">Integración con Google Sheets</label>
+                        <input type="text" id="admin-sheet-url" placeholder="Pega aquí la URL de tu Web App de Google Script" style="font-size: 13px; padding: 10px; width: 100%; border: 1px solid #cbd5e0; border-radius: 8px; margin-bottom: 12px; box-sizing: border-box;">
+                        
+                        <button class="primary-btn" id="btn-export-sheets" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); font-size: 14px; padding: 12px;">
+                            <i class="fas fa-cloud-upload-alt"></i> Sincronizar Datos a Sheets
+                        </button>
+                    </div>
+
+                    <button class="secondary-btn mt-15" id="btn-export-csv" style="font-size: 14px;">
+                        <i class="fas fa-file-excel"></i> Descargar respaldo CSV
+                    </button>
+                </div>
+            </div>
+            
+            <div id="admin-servicios-section" class="admin-only" style="display: none; margin-top: 20px;">
+                <h3 class="section-title">Servicios Habilitados</h3>
+                <div class="card">
+                    <div id="lista-servicios" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+                        <!-- JS populated -->
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="nuevo-servicio-input" placeholder="Añadir servicio..." style="flex: 1; margin: 0; font-size: 14px;">
+                        <button class="primary-btn" id="btn-add-servicio" style="width: auto; padding: 14px 20px; border-radius: 12px;"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div style="height: 100px;"></div>
+        </main>
+
+        <!-- Modal Expandido -->
+        <div class="modal-overlay" id="service-modal">
+            <div class="drawer">
+                <div class="drawer-handle"></div>
+                <div class="drawer-header">
+                    <h2 id="modal-clienta">Nombre</h2>
+                    <span id="modal-fecha" class="item-meta">Hora</span>
+                </div>
+                <div class="drawer-body">
+                    <div id="modal-foto" style="width: 100%; height: 200px; border-radius: 12px; background-size: cover; background-position: center; margin-bottom: 16px; display: none;"></div>
+                    <p><strong>Servicio:</strong> <span id="modal-servicio">Softgel</span></p>
+                    <p><strong>Profesional:</strong> <span id="modal-profesional">Agus</span></p>
+                </div>
+                <div class="drawer-footer">
+                    <div class="financiero-item">
+                        <span>Precio Total</span>
+                        <span id="modal-total">$0</span>
+                    </div>
+                    <div class="financiero-item">
+                        <span>Seña</span>
+                        <span id="modal-sena">$0</span>
+                    </div>
+                    <div class="financiero-item">
+                        <span>Método Pago</span>
+                        <span id="modal-pago">Efectivo</span>
+                    </div>
+                    <hr>
+                    <div class="financiero-item total">
+                        <span>A Cobrar</span>
+                        <span id="modal-cobrar">$0</span>
+                    </div>
+                    <div class="financiero-item comision admin-only" id="modal-comision-container" style="display: none; color: #059669;">
+                        <span>Comisión (40%)</span>
+                        <span id="modal-comision">$0</span>
+                    </div>
+                    
+                    <button class="primary-btn mt-20 admin-only" id="btn-editar" style="display: none;">Editar Registro</button>
+                    <button class="secondary-btn mt-10" id="btn-cerrar-modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
