@@ -9,13 +9,55 @@ document.addEventListener('DOMContentLoaded', () => {
         metodoPago: null
     };
 
-    let history = JSON.parse(localStorage.getItem('aguscau_history')) || [
-        { id: 1, fecha: new Date().toISOString(), empleado: 'Agus', clienta: 'Maria Gomez', servicio: 'Softgel', total: 8500, sena: 0, cobrar: 8500, pago: 'Mercado Pago', foto: 'ejemplo-foto.png' },
-        { id: 2, fecha: new Date().toISOString(), empleado: 'Cande', clienta: 'Julieta Silva', servicio: 'Kapping', total: 7200, sena: 0, cobrar: 7200, pago: 'Efectivo', foto: null }
-    ];
-
-    let serviciosList = JSON.parse(localStorage.getItem('aguscau_servicios')) || ['Softgel', 'Kapping', 'Sculpted', 'Esmaltado', 'Lifting'];
+    let history = [];
+    let serviciosList = ['Softgel', 'Kapping', 'Sculpted', 'Esmaltado', 'Lifting'];
     let editState = { servicio: '' };
+
+    const supabaseUrl = 'https://honqcuantlkdxwwjhxmw.supabase.co/rest/v1';
+    const supabaseKey = 'sb_publishable_QcL6c0517heNESp4SfREyQ_d7DliFAc';
+    const supabaseHeaders = {
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+    };
+
+    async function loadInitialData() {
+        try {
+            const hRes = await fetch(`${supabaseUrl}/aguscau_history?select=*&order=fecha.desc`, { headers: supabaseHeaders });
+            if (hRes.ok) {
+                const data = await hRes.json();
+                if (data && data.length > 0) {
+                    history = data.map(row => ({
+                        id: row.id,
+                        fecha: row.fecha,
+                        empleado: row.staff,
+                        clienta: row.clienta,
+                        servicio: row.servicio,
+                        total: row.total,
+                        sena: row.seña,
+                        cobrar: row.cobro,
+                        pago: row.pago,
+                        foto: row.foto
+                    }));
+                }
+            }
+            
+            const sRes = await fetch(`${supabaseUrl}/aguscau_servicios?select=*`, { headers: supabaseHeaders });
+            if (sRes.ok) {
+                const sData = await sRes.json();
+                if (sData && sData.length > 0) serviciosList = sData.map(s => s.nombre);
+            }
+        } catch (e) {
+            console.error('Error fetching Supabase data:', e);
+        }
+        renderServiciosButtons();
+        if (document.getElementById('screen-historial').classList.contains('active')) {
+            renderHistory();
+        }
+    }
+    
+    loadInitialData();
 
     function renderServiciosButtons() {
         const groupVenta = document.getElementById('servicio-group');
@@ -72,12 +114,20 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if(listAdmin) {
             document.querySelectorAll('.delete-srv-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
+                btn.addEventListener('click', async (e) => {
                     const idx = parseInt(e.currentTarget.dataset.index);
-                    if (confirm(`¿Segura que querés eliminar el servicio "${serviciosList[idx]}"?`)) {
+                    const val = serviciosList[idx];
+                    if (confirm(`¿Segura que querés eliminar el servicio "${val}"?`)) {
                         serviciosList.splice(idx, 1);
-                        localStorage.setItem('aguscau_servicios', JSON.stringify(serviciosList));
                         renderServiciosButtons();
+                        try {
+                            await fetch(`${supabaseUrl}/aguscau_servicios?nombre=eq.${encodeURIComponent(val)}`, {
+                                method: 'DELETE',
+                                headers: supabaseHeaders
+                            });
+                        } catch (err) {
+                            console.error('Error deleting service', err);
+                        }
                     }
                 });
             });
@@ -88,14 +138,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const addSrvBtn = document.getElementById('btn-add-servicio');
     if (addSrvBtn) {
-        addSrvBtn.addEventListener('click', () => {
+        addSrvBtn.addEventListener('click', async () => {
             const input = document.getElementById('nuevo-servicio-input');
             const val = input.value.trim();
             if (val && !serviciosList.includes(val)) {
                 serviciosList.push(val);
-                localStorage.setItem('aguscau_servicios', JSON.stringify(serviciosList));
                 input.value = '';
                 renderServiciosButtons();
+                try {
+                    await fetch(`${supabaseUrl}/aguscau_servicios`, {
+                        method: 'POST',
+                        headers: supabaseHeaders,
+                        body: JSON.stringify({ nombre: val })
+                    });
+                } catch (err) {
+                    console.error('Error saving service', err);
+                }
             }
         });
     }
@@ -259,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Confirm button
     const btnConfirmar = document.getElementById('btn-confirmar');
-    btnConfirmar.addEventListener('click', () => {
+    btnConfirmar.addEventListener('click', async () => {
         state.cliente = document.getElementById('cliente-nombre').value;
 
         if(!state.profesional || !state.cliente || !state.servicio || state.precioTotal <= 0 || !state.metodoPago) {
@@ -287,7 +345,29 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         history.unshift(newRecord);
-        localStorage.setItem('aguscau_history', JSON.stringify(history));
+        
+        const dbRecord = {
+            id: newRecord.id,
+            fecha: newRecord.fecha,
+            staff: newRecord.empleado,
+            clienta: newRecord.clienta,
+            servicio: newRecord.servicio,
+            total: newRecord.total,
+            seña: newRecord.sena,
+            cobro: newRecord.cobrar,
+            pago: newRecord.pago,
+            foto: newRecord.foto
+        };
+        
+        try {
+            await fetch(`${supabaseUrl}/aguscau_history`, {
+                method: 'POST',
+                headers: supabaseHeaders,
+                body: JSON.stringify(dbRecord)
+            });
+        } catch (err) {
+            console.error('Error saving history', err);
+        }
 
         // Show success screen
         document.getElementById('success-message').textContent = `Cobro de $${aCobrar.toLocaleString('es-AR')} registrado para ${state.cliente}.`;
@@ -525,7 +605,7 @@ document.addEventListener('DOMContentLoaded', () => {
         switchScreen('screen-historial');
     });
 
-    document.getElementById('btn-guardar-edicion').addEventListener('click', () => {
+    document.getElementById('btn-guardar-edicion').addEventListener('click', async () => {
         if (!currentEditItem) return;
         
         const newTotal = parseFloat(document.getElementById('edit-precio-total').value) || 0;
@@ -546,18 +626,46 @@ document.addEventListener('DOMContentLoaded', () => {
         const index = history.findIndex(h => h.id === currentEditItem.id);
         if (index > -1) {
             history[index] = currentEditItem;
-            localStorage.setItem('aguscau_history', JSON.stringify(history));
+            
+            const dbRecord = {
+                staff: currentEditItem.empleado,
+                clienta: currentEditItem.clienta,
+                servicio: currentEditItem.servicio,
+                total: currentEditItem.total,
+                seña: currentEditItem.sena,
+                cobro: currentEditItem.cobrar,
+                pago: currentEditItem.pago,
+                foto: currentEditItem.foto
+            };
+            
+            try {
+                await fetch(`${supabaseUrl}/aguscau_history?id=eq.${currentEditItem.id}`, {
+                    method: 'PATCH',
+                    headers: supabaseHeaders,
+                    body: JSON.stringify(dbRecord)
+                });
+            } catch (err) {
+                console.error('Error updating history', err);
+            }
         }
         
         alert('Registro actualizado correctamente');
         switchScreen('screen-historial');
     });
 
-    document.getElementById('btn-eliminar-registro').addEventListener('click', () => {
+    document.getElementById('btn-eliminar-registro').addEventListener('click', async () => {
         if (!currentEditItem || !confirm('¿Estás segura de que deseas eliminar este registro permanentemente?')) return;
         
         history = history.filter(h => h.id !== currentEditItem.id);
-        localStorage.setItem('aguscau_history', JSON.stringify(history));
+        
+        try {
+            await fetch(`${supabaseUrl}/aguscau_history?id=eq.${currentEditItem.id}`, {
+                method: 'DELETE',
+                headers: supabaseHeaders
+            });
+        } catch (err) {
+            console.error('Error deleting history', err);
+        }
         
         switchScreen('screen-historial');
     });
