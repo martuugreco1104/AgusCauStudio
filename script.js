@@ -164,10 +164,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const bottomNav = document.querySelector('.bottom-nav');
     bottomNav.style.display = 'none'; // Hide initially
 
+    const PINS = {
+        'Agus': '1104',
+        'Cande': '1234',
+        'Cacu': '1234'
+    };
+
+    let pendingUser = null;
+    const pinModal = document.getElementById('pin-modal');
+    const pinInput = document.getElementById('pin-input');
+    const pinError = document.getElementById('pin-error');
+    const pinUserName = document.getElementById('pin-user-name');
+
     const loginBtns = document.querySelectorAll('.login-btn');
     loginBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            currentUser = btn.dataset.user;
+            pendingUser = btn.dataset.user;
+            pinUserName.textContent = `Accediendo como ${pendingUser}`;
+            pinInput.value = '';
+            pinError.textContent = '';
+            pinModal.classList.add('active');
+            setTimeout(() => pinInput.focus(), 100);
+        });
+    });
+
+    document.getElementById('btn-cancel-pin').addEventListener('click', () => {
+        pinModal.classList.remove('active');
+        pendingUser = null;
+    });
+
+    function attemptLogin() {
+        if (!pendingUser) return;
+        
+        if (pinInput.value === PINS[pendingUser]) {
+            pinModal.classList.remove('active');
+            currentUser = pendingUser;
             userRole = currentUser === 'Agus' ? 'admin' : 'staff';
             
             // Apply Permissions
@@ -194,8 +225,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             switchScreen('screen-nueva-venta');
-        });
+        } else {
+            pinError.textContent = 'PIN incorrecto. Intentá nuevamente.';
+            pinInput.value = '';
+            pinInput.focus();
+        }
+    }
+
+    document.getElementById('btn-confirm-pin').addEventListener('click', attemptLogin);
+    pinInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') attemptLogin();
     });
+
 
     // Navigation
     const navItems = document.querySelectorAll('.nav-item');
